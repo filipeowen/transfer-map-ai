@@ -1,0 +1,172 @@
+[
+  {
+    "name": "Bates Technical College",
+    "slug": "bates-technical-college",
+    "uwGuideSlug": "bates-technical-college"
+  },
+  {
+    "name": "Bellevue College",
+    "slug": "bellevue-college",
+    "uwGuideSlug": "bellevue"
+  },
+  {
+    "name": "Bellingham Technical College",
+    "slug": "bellingham-technical-college",
+    "uwGuideSlug": "bellingham"
+  },
+  {
+    "name": "Big Bend Community College",
+    "slug": "big-bend-community-college",
+    "uwGuideSlug": "big-bend"
+  },
+  {
+    "name": "Cascadia College",
+    "slug": "cascadia-college",
+    "uwGuideSlug": "cascadia"
+  },
+  {
+    "name": "Centralia College",
+    "slug": "centralia-college",
+    "uwGuideSlug": "centralia"
+  },
+  {
+    "name": "Clark College",
+    "slug": "clark-college",
+    "uwGuideSlug": "clark"
+  },
+  {
+    "name": "Clover Park Technical College",
+    "slug": "clover-park-technical-college",
+    "uwGuideSlug": "clover-park"
+  },
+  {
+    "name": "Columbia Basin College",
+    "slug": "columbia-basin-college",
+    "uwGuideSlug": "columbia-basin"
+  },
+  {
+    "name": "Edmonds Community College",
+    "slug": "edmonds-community-college",
+    "uwGuideSlug": "edmonds"
+  },
+  {
+    "name": "Everett Community College",
+    "slug": "everett-community-college",
+    "uwGuideSlug": "everett"
+  },
+  {
+    "name": "Grays Harbor College",
+    "slug": "grays-harbor-college",
+    "uwGuideSlug": "grays-harbor"
+  },
+  {
+    "name": "Green River College",
+    "slug": "green-river-college",
+    "uwGuideSlug": "green-river"
+  },
+  {
+    "name": "Highline College",
+    "slug": "highline-college",
+    "uwGuideSlug": "highline"
+  },
+  {
+    "name": "Lake Washington Institute of Technology",
+    "slug": "lake-washington-institute-of-technology",
+    "uwGuideSlug": "lake-washington"
+  },
+  {
+    "name": "Lower Columbia College",
+    "slug": "lower-columbia-college",
+    "uwGuideSlug": "lower-columbia"
+  },
+  {
+    "name": "North Seattle College",
+    "slug": "north-seattle-college",
+    "uwGuideSlug": "seattle"
+  },
+  {
+    "name": "Northwest Indian College",
+    "slug": "northwest-indian-college",
+    "uwGuideSlug": "northwest-indian"
+  },
+  {
+    "name": "Olympic College",
+    "slug": "olympic-college",
+    "uwGuideSlug": "olympic"
+  },
+  {
+    "name": "Peninsula College",
+    "slug": "peninsula-college",
+    "uwGuideSlug": "peninsula"
+  },
+  {
+    "name": "Pierce College",
+    "slug": "pierce-college",
+    "uwGuideSlug": "pierce"
+  },
+  {
+    "name": "Renton Technical College",
+    "slug": "renton-technical-college",
+    "uwGuideSlug": "renton"
+  },
+  {
+    "name": "Seattle Central College",
+    "slug": "seattle-central-college",
+    "uwGuideSlug": "seattle"
+  },
+  {
+    "name": "Shoreline Community College",
+    "slug": "shoreline-community-college",
+    "uwGuideSlug": "shoreline"
+  },
+  {
+    "name": "Skagit Valley College",
+    "slug": "skagit-valley-college",
+    "uwGuideSlug": "skagit-valley"
+  },
+  {
+    "name": "South Puget Sound Community College",
+    "slug": "south-puget-sound-community-college",
+    "uwGuideSlug": "south-puget-sound"
+  },
+  {
+    "name": "South Seattle College",
+    "slug": "south-seattle-college",
+    "uwGuideSlug": "seattle"
+  },
+  {
+    "name": "Spokane Community College",
+    "slug": "spokane-community-college",
+    "uwGuideSlug": "spokane"
+  },
+  {
+    "name": "Spokane Falls Community College",
+    "slug": "spokane-falls-community-college",
+    "uwGuideSlug": "spokane"
+  },
+  {
+    "name": "Tacoma Community College",
+    "slug": "tacoma-community-college",
+    "uwGuideSlug": "tacoma"
+  },
+  {
+    "name": "Walla Walla Community College",
+    "slug": "walla-walla-community-college",
+    "uwGuideSlug": "wallawalla"
+  },
+  {
+    "name": "Wenatchee Valley College",
+    "slug": "wenatchee-valley-college",
+    "uwGuideSlug": "wenatcheevalley"
+  },
+  {
+    "name": "Whatcom Community College",
+    "slug": "whatcom-community-college",
+    "uwGuideSlug": "whatcom"
+  },
+  {
+    "name": "Yakima Valley College",
+    "slug": "yakima-valley-college",
+    "uwGuideSlug": "yakima-valley"
+  }
+]
