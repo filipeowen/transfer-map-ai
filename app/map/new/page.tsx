@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FormEvent, KeyboardEvent, useMemo, useState } from "react";
+import { ChangeEvent, FormEvent, KeyboardEvent, useMemo, useState } from "react";
 import { AppLogo } from "@/components/AppLogo";
 import { FlowStepper } from "@/components/FlowStepper";
 import { UwDisclaimerBanner } from "@/components/UwDisclaimerBanner";
@@ -10,6 +10,7 @@ import { WaCollegeSelect } from "@/components/WaCollegeSelect";
 import { UW_REQUIREMENT_TRACKS } from "@/lib/uwDegreeRequirements";
 import { UW_TARGET_SCHOOL } from "@/lib/uwMockData";
 import { normalizeCourseCode } from "@/lib/uwMatching";
+import { extractCourseCodesFromTranscriptText } from "@/lib/transcriptCourseExtraction";
 
 const EXAMPLE_COURSES = ["ENGL& 101", "MATH& 151", "CHEM& 161", "BIOL& 160", "PSYC& 100"];
 
@@ -26,6 +27,11 @@ export default function NewTransferMapPage() {
   const [requirementTrackId, setRequirementTrackId] = useState(
     "arts-sciences-all-majors"
   );
+  const [transcriptText, setTranscriptText] = useState("");
+  const [transcriptStatus, setTranscriptStatus] = useState(
+    "Upload a transcript file or paste transcript text to extract possible courses."
+  );
+  const [lastExtractedCourses, setLastExtractedCourses] = useState<string[]>([]);
 
   const normalizedPreview = useMemo(
     () => courseInputs.map(normalizeCourseCode).filter(Boolean),
@@ -43,6 +49,83 @@ export default function NewTransferMapPage() {
       current.includes(normalized) ? current : [...current, normalized]
     );
     setCourseDraft("");
+  }
+
+  function addCourses(courses: string[]) {
+    const normalizedCourses = courses.map(normalizeCourseCode).filter(Boolean);
+
+    if (normalizedCourses.length === 0) {
+      return 0;
+    }
+
+    const existingCourses = new Set(courseInputs);
+    const newCourses = normalizedCourses.filter(
+      (course) => !existingCourses.has(course)
+    );
+
+    setCourseInputs((current) => {
+      const next = new Set(current);
+
+      normalizedCourses.forEach((course) => {
+        next.add(course);
+      });
+
+      return [...next];
+    });
+
+    return newCourses.length;
+  }
+
+  function extractTranscriptCourses(text: string, sourceLabel = "transcript text") {
+    const extraction = extractCourseCodesFromTranscriptText(text);
+    const addedCount = addCourses(extraction.courses);
+
+    setLastExtractedCourses(extraction.courses);
+
+    if (extraction.courses.length === 0) {
+      setTranscriptStatus(
+        `No course codes were found in the ${sourceLabel}. Try pasting transcript text from the PDF.`
+      );
+      return;
+    }
+
+    setTranscriptStatus(
+      `Found ${extraction.courses.length} possible course ${
+        extraction.courses.length === 1 ? "code" : "codes"
+      } from ${sourceLabel}. Added ${addedCount} new ${
+        addedCount === 1 ? "course" : "courses"
+      }. Review the chips before continuing.`
+    );
+  }
+
+  async function handleTranscriptFileChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    if (file.size > 8 * 1024 * 1024) {
+      setTranscriptStatus("That file is too large for this beta. Try a smaller unofficial transcript or paste text below.");
+      return;
+    }
+
+    setTranscriptStatus(`Reading ${file.name} locally in your browser...`);
+
+    try {
+      const text = await file.text();
+
+      extractTranscriptCourses(
+        text,
+        file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf")
+          ? `${file.name} with best-effort PDF text extraction`
+          : file.name
+      );
+    } catch {
+      setTranscriptStatus("Could not read that file. Try copying and pasting the transcript text instead.");
+    } finally {
+      event.target.value = "";
+    }
   }
 
   function removeCourse(course: string) {
@@ -123,7 +206,7 @@ export default function NewTransferMapPage() {
                   className="min-h-12 w-full min-w-0 rounded-lg border border-slate-300 bg-white px-3 text-base outline-none transition focus:border-violet-700 focus:ring-4 focus:ring-violet-100"
                 />
                 <span className="text-xs font-normal text-slate-500">
-                  Optional, but useful for advisor questions.
+                  Optional, helps interpret major preparation.
                 </span>
               </label>
 
@@ -175,90 +258,160 @@ export default function NewTransferMapPage() {
             </div>
 
             <div className="mt-8 border-t border-slate-200 pt-6">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-                <div>
-                  <h2 className="text-xl font-black text-slate-950">Enter your courses</h2>
-                  <p className="mt-1 text-sm leading-6 text-slate-600">
-                    Add one code at a time. Use the ampersand if the course has
-                    one.
-                  </p>
+              <section className="rounded-lg border border-slate-200 bg-slate-50 p-4 sm:p-5">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-wide text-violet-800">
+                      Transcript upload beta
+                    </p>
+                    <h2 className="mt-2 text-xl font-black text-slate-950">
+                      Upload or paste an unofficial transcript
+                    </h2>
+                    <p className="mt-2 text-sm leading-6 text-slate-600">
+                      The app looks for possible course codes and adds them as editable chips.
+                      Nothing is saved, and you should remove sensitive information if possible.
+                    </p>
+                  </div>
+                  <label className="inline-flex min-h-11 cursor-pointer items-center justify-center rounded-lg border border-violet-200 bg-white px-4 text-sm font-bold text-violet-800 transition hover:border-violet-300 hover:bg-violet-50">
+                    Upload file
+                    <input
+                      accept=".pdf,.txt,.csv,.text,application/pdf,text/plain,text/csv"
+                      className="sr-only"
+                      onChange={handleTranscriptFileChange}
+                      type="file"
+                    />
+                  </label>
                 </div>
-                <div className="text-sm font-bold text-slate-500">
-                  {courseInputs.length} added
+
+                <div className="mt-4 grid gap-3">
+                  <label className="grid gap-2 text-sm font-medium text-slate-700" htmlFor="transcriptText">
+                    Paste transcript text
+                    <textarea
+                      id="transcriptText"
+                      value={transcriptText}
+                      onChange={(event) => setTranscriptText(event.target.value)}
+                      placeholder="Paste unofficial transcript text here, then extract courses."
+                      className="min-h-28 w-full resize-y rounded-lg border border-slate-300 bg-white px-3 py-3 text-base outline-none transition focus:border-violet-700 focus:ring-4 focus:ring-violet-100"
+                    />
+                  </label>
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <p className="text-sm leading-6 text-slate-600">{transcriptStatus}</p>
+                    <button
+                      className="inline-flex min-h-10 items-center justify-center rounded-lg bg-slate-900 px-4 text-sm font-bold text-white transition hover:bg-slate-800 focus:outline-none focus:ring-4 focus:ring-slate-200 disabled:cursor-not-allowed disabled:bg-slate-300"
+                      disabled={!transcriptText.trim()}
+                      onClick={() => extractTranscriptCourses(transcriptText)}
+                      type="button"
+                    >
+                      Extract courses
+                    </button>
+                  </div>
                 </div>
-              </div>
 
-              <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto]">
-                <label className="sr-only" htmlFor="courseDraft">
-                  Course code
-                </label>
-                <input
-                  id="courseDraft"
-                  value={courseDraft}
-                  onChange={(event) => setCourseDraft(event.target.value)}
-                  onKeyDown={handleCourseKeyDown}
-                  placeholder="e.g. ENGL& 101"
-                  className="min-h-12 w-full min-w-0 rounded-lg border border-slate-300 bg-white px-3 text-base outline-none transition focus:border-violet-700 focus:ring-4 focus:ring-violet-100"
-                />
-                <button
-                  type="button"
-                  onClick={() => addCourse()}
-                  className="inline-flex min-h-12 items-center justify-center rounded-lg bg-violet-800 px-5 text-sm font-bold text-white transition hover:bg-violet-900 focus:outline-none focus:ring-4 focus:ring-violet-100"
-                >
-                  Add course
-                </button>
-              </div>
+                {lastExtractedCourses.length > 0 ? (
+                  <div className="mt-4 border-t border-slate-200 pt-4">
+                    <div className="text-xs font-bold uppercase tracking-wide text-slate-500">
+                      Last extracted
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {lastExtractedCourses.map((course) => (
+                        <span
+                          className="rounded-full bg-white px-3 py-1 text-sm font-bold text-slate-800"
+                          key={course}
+                        >
+                          {course}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+              </section>
 
-              <div className="mt-4 flex flex-wrap gap-2">
-                {courseInputs.map((course) => (
+              <div className="mt-8 border-t border-slate-200 pt-6">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                  <div>
+                    <h2 className="text-xl font-black text-slate-950">Enter your courses</h2>
+                    <p className="mt-1 text-sm leading-6 text-slate-600">
+                      Add one code at a time. Use the ampersand if the course has
+                      one.
+                    </p>
+                  </div>
+                  <div className="text-sm font-bold text-slate-500">
+                    {courseInputs.length} added
+                  </div>
+                </div>
+
+                <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto]">
+                  <label className="sr-only" htmlFor="courseDraft">
+                    Course code
+                  </label>
+                  <input
+                    id="courseDraft"
+                    value={courseDraft}
+                    onChange={(event) => setCourseDraft(event.target.value)}
+                    onKeyDown={handleCourseKeyDown}
+                    placeholder="e.g. ENGL& 101"
+                    className="min-h-12 w-full min-w-0 rounded-lg border border-slate-300 bg-white px-3 text-base outline-none transition focus:border-violet-700 focus:ring-4 focus:ring-violet-100"
+                  />
                   <button
-                    className="inline-flex min-h-9 items-center gap-2 rounded-full bg-slate-100 px-3 text-sm font-bold text-slate-800 transition hover:bg-rose-50 hover:text-rose-700"
-                    key={course}
-                    onClick={() => removeCourse(course)}
                     type="button"
+                    onClick={() => addCourse()}
+                    className="inline-flex min-h-12 items-center justify-center rounded-lg bg-violet-800 px-5 text-sm font-bold text-white transition hover:bg-violet-900 focus:outline-none focus:ring-4 focus:ring-violet-100"
                   >
-                    {course}
-                    <span aria-hidden="true">×</span>
+                    Add course
                   </button>
-                ))}
-              </div>
-
-              <div className="mt-4 flex flex-wrap gap-2">
-                {EXAMPLE_COURSES.map((course) => (
-                  <button
-                    key={course}
-                    type="button"
-                    onClick={() => addCourse(course)}
-                    className="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 transition hover:border-violet-300 hover:text-violet-800"
-                  >
-                    {course}
-                  </button>
-                ))}
-              </div>
-
-              <div className="mt-5 rounded-lg border border-violet-100 bg-violet-50 p-4 text-sm leading-6 text-violet-950">
-                <strong>Washington Common Course Numbering uses an ampersand.</strong>{" "}
-                Be careful, ENGL&amp; 101 and ENGL 101 may have different UW
-                equivalencies.
-              </div>
-
-              <div className="mt-5 rounded-lg border border-slate-200 bg-slate-50 p-4">
-                <div className="text-xs font-bold uppercase tracking-wide text-slate-500">
-                  Normalized preview
                 </div>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {normalizedPreview.length > 0 ? (
-                    normalizedPreview.map((course) => (
-                      <span
-                        key={course}
-                        className="rounded-full bg-white px-3 py-1 text-sm font-bold text-slate-800"
-                      >
-                        {course}
-                      </span>
-                    ))
-                  ) : (
-                    <span className="text-sm text-slate-500">Add a course to preview.</span>
-                  )}
+
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {courseInputs.map((course) => (
+                    <button
+                      className="inline-flex min-h-9 items-center gap-2 rounded-full bg-slate-100 px-3 text-sm font-bold text-slate-800 transition hover:bg-rose-50 hover:text-rose-700"
+                      key={course}
+                      onClick={() => removeCourse(course)}
+                      type="button"
+                    >
+                      {course}
+                      <span aria-hidden="true">×</span>
+                    </button>
+                  ))}
+                </div>
+
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {EXAMPLE_COURSES.map((course) => (
+                    <button
+                      key={course}
+                      type="button"
+                      onClick={() => addCourse(course)}
+                      className="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 transition hover:border-violet-300 hover:text-violet-800"
+                    >
+                      {course}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="mt-5 rounded-lg border border-violet-100 bg-violet-50 p-4 text-sm leading-6 text-violet-950">
+                  <strong>Washington Common Course Numbering uses an ampersand.</strong>{" "}
+                  Be careful, ENGL&amp; 101 and ENGL 101 may have different UW
+                  equivalencies.
+                </div>
+
+                <div className="mt-5 rounded-lg border border-slate-200 bg-slate-50 p-4">
+                  <div className="text-xs font-bold uppercase tracking-wide text-slate-500">
+                    Normalized preview
+                  </div>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {normalizedPreview.length > 0 ? (
+                      normalizedPreview.map((course) => (
+                        <span
+                          key={course}
+                          className="rounded-full bg-white px-3 py-1 text-sm font-bold text-slate-800"
+                        >
+                          {course}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="text-sm text-slate-500">Add a course to preview.</span>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -270,9 +423,9 @@ export default function NewTransferMapPage() {
               <ul className="mt-4 grid gap-3 text-sm leading-6 text-slate-600">
                 {[
                   "Uses UW's public equivalency guide data",
+                  "Can extract possible course codes from transcript text",
                   "Shows how your courses may transfer",
-                  "Shows UW requirements they may satisfy",
-                  "Helps you plan advisor questions"
+                  "Shows UW requirements they may satisfy"
                 ].map((item) => (
                   <li className="flex gap-3" key={item}>
                     <span className="mt-1 h-2 w-2 rounded-full bg-emerald-500" />

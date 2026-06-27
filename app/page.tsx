@@ -13,7 +13,7 @@ const featureCards = [
   },
   {
     title: "Plan with confidence",
-    body: "Create focused advisor questions before you register for the next term."
+    body: "Spot what may count, what may not, and what needs confirmation before you register."
   }
 ];
 
